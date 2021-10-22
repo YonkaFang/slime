@@ -28,6 +28,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	networkingistioiov1alpha3 "slime.io/slime/framework/apis/networking/v1alpha3"
+	"slime.io/slime/framework/bootstrap"
+	"slime.io/slime/framework/model"
 	"slime.io/slime/framework/util"
 )
 
@@ -35,6 +37,7 @@ import (
 type DestinationRuleReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
+	Env    *bootstrap.Environment
 }
 
 // +kubebuilder:rbac:groups=networking.istio.io,resources=destinationrules,verbs=get;list;watch;create;update;patch;delete
@@ -51,6 +54,9 @@ func (r *DestinationRuleReconciler) Reconcile(req ctrl.Request) (ctrl.Result, er
 	if err != nil && !errors.IsNotFound(err) {
 		log.Errorf("get destinationRule error, %+v", err)
 		return reconcile.Result{}, err
+	}
+	if !model.LabelMatchIstioRev(instance.Labels, r.Env.IstioRev()) {
+		return ctrl.Result{}, nil
 	}
 	log.Infof("get destinationRule, %s", instance.Name)
 
